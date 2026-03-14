@@ -3,14 +3,13 @@ mod shared;
 
 use crate::api::routes::routes;
 
-use crate::shared::config::load_env_var::JwtConfig;
+use crate::shared::config::load_env_var::{EnvVariables, JwtConfig};
 use crate::shared::config::{app_state::AppState, postgres};
 use actix_web::{App, HttpServer, middleware::Logger, web};
 use dotenvy::dotenv;
 use env_logger::Env;
-use log::{error, info};
+use log::error;
 use migration::{Migrator, MigratorTrait};
-use std::env;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -23,6 +22,7 @@ async fn main() -> std::io::Result<()> {
     // This panics immediately if required vars (e.g. JWT_SECRET) are missing,
     // rather than surfacing as a 500 error on the first authenticated request.
     JwtConfig::init();
+    EnvVariables::init();
 
     // Initialize DB connection via the postgres module. This requires the
     // `DATABASE_URL` environment variable to be set. No secrets are hardcoded here.
@@ -42,8 +42,9 @@ async fn main() -> std::io::Result<()> {
     // Build application state and start server.
     let state = web::Data::new(AppState::new(db));
 
-    let bind_addr = env::var("BIND_ADDR").unwrap_or_else(|_| "127.0.0.1:8080".to_string());
-    info!("starting server at https://{}", &bind_addr);
+    let address = EnvVariables::get().address.clone();
+    let port = EnvVariables::get().port.clone();
+    let base_url = format!("{}:{}", address, port);
 
     HttpServer::new(move || {
         App::new()
@@ -51,7 +52,7 @@ async fn main() -> std::io::Result<()> {
             .app_data(state.clone())
             .configure(routes)
     })
-    .bind(bind_addr)?
+    .bind(base_url)?
     .run()
     .await
 }

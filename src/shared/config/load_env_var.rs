@@ -9,7 +9,15 @@ pub struct JwtConfig {
     pub refresh_exp_days: i64,
 }
 
+#[derive(Clone, Debug)]
+pub struct EnvVariables {
+    pub address: String,
+    pub port: String,
+    pub db_url: String,
+}
+
 static JWT_CONFIG: OnceLock<JwtConfig> = OnceLock::new();
+static ENV_VARIABLES: OnceLock<EnvVariables> = OnceLock::new();
 
 impl JwtConfig {
     /// Call once at application startup (in `main`). Panics if required vars are missing.
@@ -46,5 +54,27 @@ impl JwtConfig {
         JWT_CONFIG
             .get()
             .expect("JwtConfig not initialized — call AuthConfig::init() at startup")
+    }
+}
+
+impl EnvVariables {
+    pub fn init() {
+        let db_url = env::var("DATABASE_URL").expect(".env: DATABASE_URL must be set");
+        let address = env::var("ADDRESS").expect(".env: ADDRESS must be set");
+        let port = env::var("PORT").expect(".env: PORT must be set");
+
+        ENV_VARIABLES
+            .set(EnvVariables {
+                db_url,
+                address,
+                port,
+            })
+            .expect("EnvVariables already initialized");
+    }
+
+    pub fn get() -> &'static EnvVariables {
+        ENV_VARIABLES
+            .get()
+            .expect("EnvVariables not initialized — call EnvVariables::init() at startup")
     }
 }

@@ -4,7 +4,7 @@ use actix_web::web;
 pub fn home_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("")
-            .route("", web::get().to(health))
-            .route("/db", web::get().to(check_db_connection)),
+            .route("/health", web::get().to(health))
+            .route("/db_conn", web::get().to(check_db_connection)),
     );
 }

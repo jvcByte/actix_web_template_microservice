@@ -13,9 +13,9 @@ use crate::api::users::routes::user_routes;
 async fn available_routes() -> impl Responder {
     web::Json(serde_json::json!({
         "available_routes": [
-            "/ (GET)",
-            "/db (GET)",
             "/api (GET)",
+            "/api/db_conn (GET)",
+            "/api/health (GET)",
             "/api/users (GET)",
             "/api/users/{id} (GET, PUT, DELETE)",
             "/api/auth/register (POST)",
@@ -37,6 +37,7 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/api")
             .route("", web::get().to(available_routes))
+            .route("/", web::get().to(available_routes))
             // Keep the API surface stable by grouping feature scopes under `/api`.
             // Each feature module (e.g. `users`, `auth`) should expose `routes`.
             .configure(home_routes)
