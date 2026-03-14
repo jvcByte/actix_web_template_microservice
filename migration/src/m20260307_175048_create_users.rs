@@ -1,4 +1,4 @@
-use entity::user::{User, user};
+use entity::users::{User, user};
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
