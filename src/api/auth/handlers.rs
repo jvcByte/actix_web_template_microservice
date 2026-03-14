@@ -3,11 +3,12 @@ use crate::api::refresh_tokens::repository::RefreshTokenRepository;
 use crate::api::users::dto::{CreateUser, UserResponse};
 use crate::api::users::repository::UserRepository;
 use crate::api::users::service::UserService;
+use crate::shared::config::load_env_var::AuthConfig;
 use crate::shared::errors::api_errors::ApiError;
 use crate::shared::middleware::auth::AuthenticatedUser;
 use crate::shared::utils::app_state::AppState;
 use crate::shared::utils::auth_utils::{
-    AuthConfig, create_jwt, generate_refresh_token, hash_refresh_token, refresh_expiry_timestamp,
+    create_jwt, generate_refresh_token, hash_refresh_token, refresh_expiry_timestamp,
     verify_password,
 };
 use actix_web::{HttpResponse, Result, web};

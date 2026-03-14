@@ -7,6 +7,7 @@
 use actix_web::{Responder, web};
 
 use crate::api::auth::routes::auth_routes;
+use crate::api::home::routes::home_routes;
 use crate::api::users::routes::user_routes;
 
 async fn available_routes() -> impl Responder {
@@ -38,6 +39,7 @@ pub fn routes(cfg: &mut web::ServiceConfig) {
             .route("", web::get().to(available_routes))
             // Keep the API surface stable by grouping feature scopes under `/api`.
             // Each feature module (e.g. `users`, `auth`) should expose `routes`.
+            .configure(home_routes)
             .configure(user_routes)
             .configure(auth_routes),
     );

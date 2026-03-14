@@ -3,8 +3,9 @@ use futures::future::LocalBoxFuture;
 use sea_orm::EntityTrait;
 use uuid::Uuid;
 
+use crate::shared::config::load_env_var::AuthConfig;
 use crate::shared::utils::app_state::AppState;
-use crate::shared::utils::auth_utils::{AuthConfig, decode_jwt};
+use crate::shared::utils::auth_utils::decode_jwt;
 
 /// Authenticated user extracted by the middleware / extractor.
 /// This contains only the fields commonly needed by handlers. You can expand it as needed.
