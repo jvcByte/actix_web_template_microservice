@@ -3,15 +3,15 @@ use std::sync::OnceLock;
 
 /// Authentication configuration — loaded once at startup via `init()`.
 #[derive(Clone, Debug)]
-pub struct AuthConfig {
+pub struct JwtConfig {
     pub secret: String,
     pub access_exp_minutes: i64,
     pub refresh_exp_days: i64,
 }
 
-static AUTH_CONFIG: OnceLock<AuthConfig> = OnceLock::new();
+static JWT_CONFIG: OnceLock<JwtConfig> = OnceLock::new();
 
-impl AuthConfig {
+impl JwtConfig {
     /// Call once at application startup (in `main`). Panics if required vars are missing.
     pub fn init() {
         let secret = env::var("JWT_SECRET").expect(".env: JWT_SECRET must be set");
@@ -32,19 +32,19 @@ impl AuthConfig {
             Err(_) => 30,
         };
 
-        AUTH_CONFIG
-            .set(AuthConfig {
+        JWT_CONFIG
+            .set(JwtConfig {
                 secret,
                 access_exp_minutes,
                 refresh_exp_days,
             })
-            .expect("AuthConfig already initialized");
+            .expect("JwtConfig already initialized");
     }
 
     /// Get the global config. Panics if `init()` was not called first.
-    pub fn get() -> &'static AuthConfig {
-        AUTH_CONFIG
+    pub fn get() -> &'static JwtConfig {
+        JWT_CONFIG
             .get()
-            .expect("AuthConfig not initialized — call AuthConfig::init() at startup")
+            .expect("JwtConfig not initialized — call AuthConfig::init() at startup")
     }
 }

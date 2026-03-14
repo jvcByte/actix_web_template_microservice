@@ -1,6 +1,6 @@
 use crate::api::users::dto::{CreateUser, UpdateUser, UserResponse};
 use crate::api::users::repository::UserRepository;
-use crate::shared::config::load_env_var::AuthConfig;
+use crate::shared::config::load_env_var::JwtConfig;
 use crate::shared::errors::api_errors::ApiError;
 use crate::shared::models::users::user::ActiveModel;
 use crate::shared::utils::auth_utils::{create_jwt, hash_password, verify_password};
@@ -112,7 +112,7 @@ impl UserService {
         }
 
         // Build auth config from env (JWT secret, expiry)
-        let cfg = AuthConfig::get();
+        let cfg = JwtConfig::get();
 
         // Create token
         let token = create_jwt(user.id, tv, &cfg)?;

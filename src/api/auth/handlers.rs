@@ -4,7 +4,7 @@ use crate::api::users::dto::{CreateUser, UserResponse};
 use crate::api::users::repository::UserRepository;
 use crate::api::users::service::UserService;
 use crate::shared::config::app_state::AppState;
-use crate::shared::config::load_env_var::AuthConfig;
+use crate::shared::config::load_env_var::JwtConfig;
 use crate::shared::errors::api_errors::ApiError;
 use crate::shared::middleware::auth::AuthenticatedUser;
 use crate::shared::utils::auth_utils::{
@@ -53,7 +53,7 @@ pub async fn register(
     };
 
     // Create refresh token (opaque), hash it and store in DB with expiry
-    let cfg = AuthConfig::get();
+    let cfg = JwtConfig::get();
     let refresh_plain = generate_refresh_token();
     let refresh_hash = hash_refresh_token(&refresh_plain)?;
     let refresh_expires_at = Some(DateTimeWithTimeZone::from(
@@ -110,7 +110,7 @@ pub async fn login(
     };
 
     // Compute expiry from config
-    let cfg = AuthConfig::get();
+    let cfg = JwtConfig::get();
     let expires_in = cfg.access_exp_minutes * 60;
 
     // Create and persist refresh token with expiry
@@ -181,7 +181,7 @@ pub async fn refresh(
     }
 
     // Issue new access token with the user's current token version
-    let cfg = AuthConfig::get();
+    let cfg = JwtConfig::get();
 
     // Fetch user to get current token version
     let user = UserRepository::find_by_id(&state.db, record.user_id)

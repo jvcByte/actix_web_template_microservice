@@ -4,7 +4,7 @@ use sea_orm::EntityTrait;
 use uuid::Uuid;
 
 use crate::shared::config::app_state::AppState;
-use crate::shared::config::load_env_var::AuthConfig;
+use crate::shared::config::load_env_var::JwtConfig;
 use crate::shared::utils::auth_utils::decode_jwt;
 
 /// Authenticated user extracted by the middleware / extractor.
@@ -82,7 +82,7 @@ impl FromRequest for AuthenticatedUser {
             }
 
             // 3) Decode & validate token using the shared helper (centralizes JWT config & validation)
-            let cfg = AuthConfig::get();
+            let cfg = JwtConfig::get();
             let token_data = match decode_jwt(token, &cfg) {
                 Ok(td) => td,
                 Err(_) => {

@@ -1,12 +1,12 @@
 //! Authentication helpers: password hashing, JWT creation/validation, and refresh token helpers.
 //!
 //! This module exposes a small set of utilities that the rest of the app uses:
-//! - `AuthConfig` to load JWT / token lifetime config from environment
+//! - `JwtConfig` to load JWT / token lifetime config from environment
 //! - `hash_password` / `verify_password` (Argon2id) for secure password storage
 //! - `create_jwt` / `decode_jwt` for access token issuance and validation
 //! - `generate_refresh_token` / `hash_refresh_token` / `verify_refresh_token_hash`
 //!   for opaque refresh token lifecycle (rotate+store hashed on server)
-use crate::shared::config::load_env_var::AuthConfig;
+use crate::shared::config::load_env_var::JwtConfig;
 use crate::shared::errors::api_errors::ApiError;
 use argon2::{
     Argon2,
@@ -58,8 +58,8 @@ pub fn verify_password(hash: &str, password: &str) -> Result<bool, ApiError> {
 
 /// Create a signed JWT access token for `user_id` including `token_version`.
 ///
-/// Uses HS256 (HMAC SHA-256) with the `AuthConfig::secret`.
-pub fn create_jwt(user_id: Uuid, token_version: i32, cfg: &AuthConfig) -> Result<String, ApiError> {
+/// Uses HS256 (HMAC SHA-256) with the `JwtConfig::secret`.
+pub fn create_jwt(user_id: Uuid, token_version: i32, cfg: &JwtConfig) -> Result<String, ApiError> {
     let now = Utc::now();
     let exp = (now + Duration::minutes(cfg.access_exp_minutes)).timestamp() as usize;
     let claims = Claims {
@@ -79,7 +79,7 @@ pub fn create_jwt(user_id: Uuid, token_version: i32, cfg: &AuthConfig) -> Result
 ///
 /// Returns the parsed `TokenData<Claims>` on success or an `ApiError::BadRequest`
 /// if the token is invalid or expired.
-pub fn decode_jwt(token: &str, cfg: &AuthConfig) -> Result<TokenData<Claims>, ApiError> {
+pub fn decode_jwt(token: &str, cfg: &JwtConfig) -> Result<TokenData<Claims>, ApiError> {
     let validation = Validation::default();
     decode::<Claims>(
         token,
@@ -117,7 +117,7 @@ pub fn hash_refresh_token(token: &str) -> Result<String, ApiError> {
 }
 
 /// Convenience: compute refresh token expiry timestamp (seconds since epoch)
-pub fn refresh_expiry_timestamp(cfg: &AuthConfig) -> i64 {
+pub fn refresh_expiry_timestamp(cfg: &JwtConfig) -> i64 {
     let now = Utc::now();
     (now + Duration::days(cfg.refresh_exp_days)).timestamp()
 }
