@@ -21,9 +21,29 @@ impl MigrationTrait for Migration {
                     .col(ColumnDef::new(user::Column::Name).string().not_null())
                     .col(ColumnDef::new(user::Column::Email).string().not_null())
                     .col(
+                        ColumnDef::new(user::Column::PasswordHash)
+                            .string()
+                            .not_null(),
+                    )
+                    .col(
+                        ColumnDef::new(user::Column::IsActive)
+                            .boolean()
+                            .default(Value::Bool(Some(true))),
+                    )
+                    .col(
+                        ColumnDef::new(user::Column::LastLogin)
+                            .timestamp_with_time_zone()
+                            .null(),
+                    )
+                    .col(
                         ColumnDef::new(user::Column::CreatedAt)
                             .timestamp_with_time_zone()
                             .default(Expr::current_timestamp()),
+                    )
+                    .col(
+                        ColumnDef::new(user::Column::UpdatedAt)
+                            .timestamp_with_time_zone()
+                            .null(),
                     )
                     .to_owned(),
             )

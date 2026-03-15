@@ -28,10 +28,9 @@ pub mod user {
         #[sea_orm(column_type = "Text")]
         pub password_hash: String,
         pub is_active: bool,
+        pub last_login: Option<DateTimeWithTimeZone>,
         pub created_at: Option<DateTimeWithTimeZone>,
         pub updated_at: Option<DateTimeWithTimeZone>,
-        pub last_login: Option<DateTimeWithTimeZone>,
-        pub token_version: i32,
     }
 
     #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
