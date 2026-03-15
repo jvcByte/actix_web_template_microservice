@@ -1,5 +1,5 @@
+use crate::shared::models::refresh_tokens::{RefreshToken, refresh_token};
 use chrono::Utc;
-use entity::refresh_tokens::{RefreshToken, refresh_token};
 use sea_orm::prelude::DateTimeWithTimeZone;
 use sea_orm::{
     ActiveModelTrait, ColumnTrait, DatabaseConnection, DbErr, EntityTrait, QueryFilter, Set,
@@ -31,7 +31,7 @@ impl RefreshTokenRepository {
             user_id: Set(user_id),
             token_hash: Set(token_hash),
             expires_at: Set(expires_at),
-            created_at: Set(None),
+            created_at: Set(Some(Utc::now().into())),
             revoked: Set(false),
         };
 

@@ -1,5 +1,5 @@
-use entity::refresh_tokens::{RefreshToken, refresh_token};
-use entity::users::{User, user};
+use entity::refresh_tokens::{Column as RefreshTokenColumn, Entity as RefreshToken};
+use entity::users::{Column as UserColumn, Entity as User};
 use sea_orm_migration::prelude::*;
 
 #[derive(DeriveMigrationName)]
@@ -15,29 +15,21 @@ impl MigrationTrait for Migration {
                     .table(RefreshToken)
                     .if_not_exists()
                     .col(
-                        ColumnDef::new(refresh_token::Column::Id)
+                        ColumnDef::new(RefreshTokenColumn::Id)
                             .uuid()
                             .not_null()
                             .primary_key(),
                     )
+                    .col(ColumnDef::new(RefreshTokenColumn::UserId).uuid().not_null())
                     .col(
-                        ColumnDef::new(refresh_token::Column::UserId)
-                            .uuid()
-                            .not_null(),
-                    )
-                    .col(
-                        ColumnDef::new(refresh_token::Column::TokenHash)
+                        ColumnDef::new(RefreshTokenColumn::TokenHash)
                             .string()
                             .not_null(),
                     )
+                    .col(ColumnDef::new(RefreshTokenColumn::ExpiresAt).timestamp_with_time_zone())
+                    .col(ColumnDef::new(RefreshTokenColumn::CreatedAt).timestamp_with_time_zone())
                     .col(
-                        ColumnDef::new(refresh_token::Column::ExpiresAt).timestamp_with_time_zone(),
-                    )
-                    .col(
-                        ColumnDef::new(refresh_token::Column::CreatedAt).timestamp_with_time_zone(),
-                    )
-                    .col(
-                        ColumnDef::new(refresh_token::Column::Revoked)
+                        ColumnDef::new(RefreshTokenColumn::Revoked)
                             .boolean()
                             .not_null()
                             .default(Value::Bool(Some(false))),
@@ -46,8 +38,8 @@ impl MigrationTrait for Migration {
                     .foreign_key(
                         ForeignKey::create()
                             .name("fk_refresh_tokens_user")
-                            .from(RefreshToken, refresh_token::Column::UserId)
-                            .to(User, user::Column::Id)
+                            .from(RefreshToken, RefreshTokenColumn::UserId)
+                            .to(User, UserColumn::Id)
                             .on_delete(ForeignKeyAction::Cascade),
                     )
                     .to_owned(),
@@ -60,7 +52,7 @@ impl MigrationTrait for Migration {
                 Index::create()
                     .name("idx_refresh_tokens_token_hash")
                     .table(RefreshToken)
-                    .col(refresh_token::Column::TokenHash)
+                    .col(RefreshTokenColumn::TokenHash)
                     .to_owned(),
             )
             .await
