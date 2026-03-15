@@ -8,6 +8,7 @@ use crate::shared::config::app_state::AppState;
 use crate::shared::config::load_env_var::JwtConfig;
 use crate::shared::errors::api_errors::ApiError;
 use crate::shared::middleware::auth::AuthenticatedUser;
+use crate::shared::utils::auth_utils::create_jwt;
 use actix_web::{HttpResponse, Result, web};
 use serde_json::json;
 
@@ -32,13 +33,16 @@ pub async fn register(
         .await
         .map_err(|e| e)?;
 
+    let cfg = JwtConfig::get();
+
+    // Generate an access token
+    let access_token = create_jwt(id, 0, &cfg)
+        .map_err(|e| ApiError::InternalError(format!("Token generation error: {}", e)))?;
+
+    let expires_in = cfg.access_exp_minutes * 60;
+
     // Create and persist refresh token via AuthService (returns the plain token)
     let refresh_plain = AuthService::create_refresh_for_user(&state.db, id)
-        .await
-        .map_err(|e| e)?;
-
-    // Authenticate right away to produce an access token (reuses login flow)
-    let access_token = UserService::login(&state.db, &req.email, &req.password)
         .await
         .map_err(|e| e)?;
 
@@ -54,14 +58,11 @@ pub async fn register(
         email: user_model.email,
     };
 
-    let cfg = JwtConfig::get();
-    let expires_in = cfg.access_exp_minutes * 60;
-
     // Build response
     Ok(HttpResponse::Created().json(TokenResponse {
         access_token,
         token_type: "Bearer".to_string(),
-        expires_in: expires_in,
+        expires_in,
         refresh_token: Some(refresh_plain),
         user: Some(user),
     }))

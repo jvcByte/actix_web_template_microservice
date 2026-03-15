@@ -22,14 +22,14 @@ impl RefreshTokenRepository {
     pub async fn create(
         db: &DatabaseConnection,
         user_id: Uuid,
-        token_hash: String,
+        token: String,
         expires_at: Option<DateTimeWithTimeZone>,
     ) -> Result<refresh_token::Model, DbErr> {
         let id = Uuid::new_v4();
         let active = refresh_token::ActiveModel {
             id: Set(id),
             user_id: Set(user_id),
-            token_hash: Set(token_hash),
+            token: Set(token),
             token_version: Set(0),
             revoked: Set(false),
             expires_at: Set(expires_at),
@@ -56,6 +56,20 @@ impl RefreshTokenRepository {
             .filter(refresh_token::Column::UserId.eq(user_id.to_owned()))
             .one(db)
             .await
+    }
+
+    /// Efficient check for whether the given user has any active (non-revoked) refresh tokens.
+    /// Returns `Ok(true)` if at least one active token exists, `Ok(false)` if none, or an error.
+    pub async fn has_active_for_user(
+        db: &DatabaseConnection,
+        user_id: Uuid,
+    ) -> Result<bool, DbErr> {
+        let opt = RefreshToken::find()
+            .filter(refresh_token::Column::UserId.eq(user_id.to_owned()))
+            .filter(refresh_token::Column::Revoked.eq(false))
+            .one(db)
+            .await?;
+        Ok(opt.is_some())
     }
 
     /// Find all active (non-revoked) refresh tokens.

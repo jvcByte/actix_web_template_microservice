@@ -2,8 +2,7 @@ use crate::api::auth::repository::RefreshTokenRepository;
 use crate::shared::config::load_env_var::JwtConfig;
 use crate::shared::errors::api_errors::ApiError;
 use crate::shared::utils::auth_utils::{
-    create_jwt, generate_refresh_token, hash_refresh_token, refresh_expiry_timestamp,
-    verify_password,
+    create_jwt, generate_refresh_token, is_thesame, refresh_expiry_timestamp,
 };
 use chrono::Utc;
 use sea_orm::DatabaseConnection;
@@ -24,19 +23,20 @@ impl AuthService {
     ) -> Result<String, ApiError> {
         let cfg = JwtConfig::get();
         let plain = generate_refresh_token();
-        let hash = hash_refresh_token(&plain)?;
+        let refresh_token = plain.clone();
+        // let hash = hash_refresh_token(&plain)?;
         let expires_at = Some(DateTimeWithTimeZone::from(
             chrono::DateTime::from_timestamp(refresh_expiry_timestamp(&cfg), 0)
                 .ok_or_else(|| ApiError::InternalError("Failed to compute expiry".into()))?,
         ));
 
-        RefreshTokenRepository::create(db, user_id, hash, expires_at)
+        RefreshTokenRepository::create(db, user_id, plain, expires_at)
             .await
             .map_err(|e| {
                 ApiError::InternalError(format!("DB error storing refresh token: {}", e))
             })?;
 
-        Ok(plain)
+        Ok(refresh_token)
     }
 
     /// Verify an incoming refresh token, rotate it (issue a new refresh token record),
@@ -54,7 +54,7 @@ impl AuthService {
 
         let mut matching_record = None;
         for token in all_tokens {
-            if let Ok(true) = verify_password(&token.token_hash, incoming_plain) {
+            if let Ok(true) = is_thesame(&token.token, incoming_plain) {
                 matching_record = Some(token);
                 break;
             }
@@ -85,14 +85,15 @@ impl AuthService {
 
         // Create a new refresh token and persist it, then revoke the old one.
         let new_plain = generate_refresh_token();
-        let new_hash = hash_refresh_token(&new_plain)?;
+        let new_refresh_token = new_plain.clone();
+        // let new_hash = hash_refresh_token(&new_plain)?;
         let new_expires_at = Some(DateTimeWithTimeZone::from(
             chrono::DateTime::from_timestamp(refresh_expiry_timestamp(&cfg), 0)
                 .ok_or_else(|| ApiError::InternalError("Failed to compute expiry".into()))?,
         ));
 
         let _new_record =
-            RefreshTokenRepository::create(db, record.user_id, new_hash, new_expires_at)
+            RefreshTokenRepository::create(db, record.user_id, new_plain, new_expires_at)
                 .await
                 .map_err(|_| ApiError::InternalError("Failed to store refresh token".into()))?;
 
@@ -100,7 +101,7 @@ impl AuthService {
             .await
             .map_err(|_| ApiError::InternalError("Failed to revoke old refresh token".into()))?;
 
-        Ok((access_token, new_plain))
+        Ok((access_token, new_refresh_token))
     }
 
     /// Revoke a refresh token presented by client (by matching the plain value).
@@ -116,7 +117,7 @@ impl AuthService {
 
         let mut matching_record = None;
         for token in all_tokens {
-            if let Ok(true) = verify_password(&token.token_hash, incoming_plain) {
+            if let Ok(true) = is_thesame(&token.token, incoming_plain) {
                 matching_record = Some(token);
                 break;
             }

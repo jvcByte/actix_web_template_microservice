@@ -13,7 +13,7 @@ pub mod refresh_token {
         #[sea_orm(primary_key, auto_increment = false)]
         pub id: Uuid,
         pub user_id: Uuid,
-        pub token_hash: String,
+        pub token: String,
         pub token_version: i32,
         pub revoked: bool,
         pub expires_at: Option<DateTimeWithTimeZone>,

@@ -1,3 +1,4 @@
+use crate::api::auth::repository::RefreshTokenRepository;
 use crate::shared::models::refresh_tokens::{RefreshToken, refresh_token};
 use actix_web::{Error, FromRequest, HttpRequest, dev::Payload, error, http::header, web};
 use futures::future::LocalBoxFuture;
@@ -148,7 +149,7 @@ impl FromRequest for AuthenticatedUser {
                 }
             };
 
-            // 9) Token version check for revocation:
+            // 8) Token version check for revocation:
             // Verify the token's `tv` claim (if present) matches the user's `token_version`.
             //
             // This allows immediate revocation of access tokens by incrementing the user's
@@ -165,7 +166,24 @@ impl FromRequest for AuthenticatedUser {
             // Touch `exp` so the field is considered used by the compiler (it is still validated above).
             let _ = token_data.claims.exp;
 
-            // 10) Build AuthenticatedUser
+            // 8b) Ensure the user still has an active (non-revoked) refresh token record.
+            // Use an efficient DB-level check to avoid loading all tokens into memory.
+            let has_active_for_user =
+                match RefreshTokenRepository::has_active_for_user(db, user_id).await {
+                    Ok(b) => b,
+                    Err(_) => {
+                        return Err(AuthenticatedUser::err_unauthorized(
+                            "Failed to verify session state",
+                        ));
+                    }
+                };
+            if !has_active_for_user {
+                return Err(AuthenticatedUser::err_unauthorized(
+                    "Token revoked or no active session",
+                ));
+            }
+
+            // 9) Build AuthenticatedUser
             let out = AuthenticatedUser {
                 id: user.id,
                 name: user.name,

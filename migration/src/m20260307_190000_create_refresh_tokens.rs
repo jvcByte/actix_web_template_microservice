@@ -26,7 +26,7 @@ impl MigrationTrait for Migration {
                             .not_null(),
                     )
                     .col(
-                        ColumnDef::new(refresh_token::Column::TokenHash)
+                        ColumnDef::new(refresh_token::Column::Token)
                             .string()
                             .not_null(),
                     )
@@ -65,7 +65,7 @@ impl MigrationTrait for Migration {
                 Index::create()
                     .name("idx_refresh_tokens_token_hash")
                     .table(RefreshToken)
-                    .col(refresh_token::Column::TokenHash)
+                    .col(refresh_token::Column::Token)
                     .to_owned(),
             )
             .await

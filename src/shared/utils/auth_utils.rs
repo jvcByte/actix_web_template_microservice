@@ -56,6 +56,10 @@ pub fn verify_password(hash: &str, password: &str) -> Result<bool, ApiError> {
     }
 }
 
+pub fn is_thesame(left: &str, right: &str) -> Result<bool, ApiError> {
+    Ok(left == right)
+}
+
 /// Create a signed JWT access token for `user_id` including `token_version`.
 ///
 /// Uses HS256 (HMAC SHA-256) with the `JwtConfig::secret`.
@@ -111,10 +115,10 @@ pub fn generate_refresh_token() -> String {
 ///
 /// The returned string can be stored in DB and later compared with a presented
 /// token via `verify_refresh_token_hash`.
-pub fn hash_refresh_token(token: &str) -> Result<String, ApiError> {
-    // Reuse Argon2 hashing for refresh tokens to avoid adding extra dependencies.
-    hash_password(token)
-}
+// pub fn hash_refresh_token(token: &str) -> Result<String, ApiError> {
+//     // Reuse Argon2 hashing for refresh tokens to avoid adding extra dependencies.
+//     hash_password(token)
+// }
 
 /// Convenience: compute refresh token expiry timestamp (seconds since epoch)
 pub fn refresh_expiry_timestamp(cfg: &JwtConfig) -> i64 {
