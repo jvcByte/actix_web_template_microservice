@@ -30,13 +30,32 @@ impl RefreshTokenRepository {
             id: Set(id),
             user_id: Set(user_id),
             token_hash: Set(token_hash),
+            token_version: Set(0),
+            revoked: Set(false),
             expires_at: Set(expires_at),
             created_at: Set(Some(Utc::now().into())),
-            revoked: Set(false),
         };
 
         let inserted = RefreshToken::insert(active).exec_with_returning(db).await?;
         Ok(inserted)
+    }
+
+    pub async fn update(
+        db: &DatabaseConnection,
+        model: refresh_token::ActiveModel,
+    ) -> Result<refresh_token::Model, sea_orm::DbErr> {
+        let updated = model.update(db).await?;
+        Ok(updated)
+    }
+
+    pub async fn find_by_user_id(
+        db: &DatabaseConnection,
+        user_id: Uuid,
+    ) -> Result<Option<refresh_token::Model>, DbErr> {
+        RefreshToken::find()
+            .filter(refresh_token::Column::UserId.eq(user_id.to_owned()))
+            .one(db)
+            .await
     }
 
     /// Find all active (non-revoked) refresh tokens.

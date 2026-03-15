@@ -1,5 +1,4 @@
 use crate::api::auth::repository::RefreshTokenRepository;
-use crate::api::auth::repository::UserRepository;
 use crate::shared::config::load_env_var::JwtConfig;
 use crate::shared::errors::api_errors::ApiError;
 use crate::shared::utils::auth_utils::{
@@ -51,7 +50,7 @@ impl AuthService {
         // Load all active (non-revoked) tokens and find the matching one by verifying the hash.
         let all_tokens = RefreshTokenRepository::find_all_active(db)
             .await
-            .map_err(|_| ApiError::InternalError("DB error".to_string()))?;
+            .map_err(|e| ApiError::InternalError(e.to_string()))?;
 
         let mut matching_record = None;
         for token in all_tokens {
@@ -76,13 +75,13 @@ impl AuthService {
         }
 
         // Fetch user to obtain current token_version for the JWT
-        let user = UserRepository::find_by_id(db, record.user_id)
+        let refresh_token = RefreshTokenRepository::find_by_user_id(db, record.user_id)
             .await
-            .map_err(|_| ApiError::InternalError("DB error".to_string()))?
-            .ok_or_else(|| ApiError::NotFound("User not found".into()))?;
+            .map_err(|e| ApiError::InternalError(e.to_string()))?
+            .ok_or_else(|| ApiError::NotFound("Token Not Found".into()))?;
 
         let cfg = JwtConfig::get();
-        let access_token = create_jwt(record.user_id, user.token_version, &cfg)?;
+        let access_token = create_jwt(record.user_id, refresh_token.token_version, &cfg)?;
 
         // Create a new refresh token and persist it, then revoke the old one.
         let new_plain = generate_refresh_token();

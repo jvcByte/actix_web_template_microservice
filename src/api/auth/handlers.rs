@@ -1,8 +1,8 @@
 // Authentication handlers
 use crate::api::auth::dto::{LoginRequest, RefreshRequest, RegisterRequest, TokenResponse};
+use crate::api::auth::repository::UserRepository;
 use crate::api::auth::service::AuthService;
 use crate::api::users::dto::{CreateUser, UserResponse};
-use crate::api::users::repository::UserRepository;
 use crate::api::users::service::UserService;
 use crate::shared::config::app_state::AppState;
 use crate::shared::config::load_env_var::JwtConfig;

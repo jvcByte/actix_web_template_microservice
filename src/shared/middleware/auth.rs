@@ -1,6 +1,7 @@
+use crate::shared::models::refresh_tokens::{RefreshToken, refresh_token};
 use actix_web::{Error, FromRequest, HttpRequest, dev::Payload, error, http::header, web};
 use futures::future::LocalBoxFuture;
-use sea_orm::EntityTrait;
+use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
 use uuid::Uuid;
 
 use crate::shared::config::app_state::AppState;
@@ -114,7 +115,9 @@ impl FromRequest for AuthenticatedUser {
             let db = &state.db;
             let user = match entity::users::User::find_by_id(user_id).one(db).await {
                 Ok(opt) => opt,
-                Err(_) => return Err(AuthenticatedUser::err_unauthorized("Failed to query user")),
+                Err(err) => {
+                    return Err(AuthenticatedUser::err_unauthorized(err.to_string()));
+                }
             };
 
             let user = match user {
@@ -122,7 +125,30 @@ impl FromRequest for AuthenticatedUser {
                 None => return Err(AuthenticatedUser::err_unauthorized("User not found")),
             };
 
-            // 8) Token version check for revocation:
+            // 8) Lookup token_version in DB
+            // We query the entity defined in the `entity` crate. The repository pattern elsewhere wraps these calls;
+            // here we query directly for simplicity. This requires the `entity` crate to be present in the workspace.
+            let refresh_token = match RefreshToken::find()
+                .filter(refresh_token::Column::UserId.eq(user_id.to_owned()))
+                .one(db)
+                .await
+            {
+                Ok(opt) => opt,
+                Err(err) => {
+                    return Err(AuthenticatedUser::err_unauthorized(err.to_string()));
+                }
+            };
+
+            let tk = match refresh_token {
+                Some(t) => t,
+                None => {
+                    return Err(AuthenticatedUser::err_unauthorized(
+                        "Refresh Token not found",
+                    ));
+                }
+            };
+
+            // 9) Token version check for revocation:
             // Verify the token's `tv` claim (if present) matches the user's `token_version`.
             //
             // This allows immediate revocation of access tokens by incrementing the user's
@@ -130,7 +156,7 @@ impl FromRequest for AuthenticatedUser {
             // dead-code warnings (jsonwebtoken already validates expiry during decode).
             if let Some(token_tv) = Some(token_data.claims.tv) {
                 // `user.token_version` is stored on the user model (i32).
-                if token_tv != user.token_version {
+                if token_tv != tk.token_version {
                     return Err(AuthenticatedUser::err_unauthorized(
                         "Token has been revoked",
                     ));
@@ -139,7 +165,7 @@ impl FromRequest for AuthenticatedUser {
             // Touch `exp` so the field is considered used by the compiler (it is still validated above).
             let _ = token_data.claims.exp;
 
-            // 9) Build AuthenticatedUser
+            // 10) Build AuthenticatedUser
             let out = AuthenticatedUser {
                 id: user.id,
                 name: user.name,
