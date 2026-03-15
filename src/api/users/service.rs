@@ -123,6 +123,16 @@ impl UserService {
         // Create token
         let token = create_jwt(user.id, tv, &cfg)?;
 
+        // Update the last_login column on users table
+        let active = ActiveModel {
+            id: Set(user.id),
+            last_login: Set(Some(Utc::now().into())),
+            ..Default::default()
+        };
+        UserRepository::update(db, active)
+            .await
+            .map_err(|e| ApiError::InternalError(format!("DB update failed: {}", e)))?;
+
         Ok(token)
     }
 
