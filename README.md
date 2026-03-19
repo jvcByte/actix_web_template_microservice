@@ -65,7 +65,7 @@ actix_web_template_microservice/
 
 2. **Set up environment variables**
    ```bash
-   cp .env.example .env  # If you have an example file
+   cp .env.example .env
    ```
 
    Configure your `.env` file:
