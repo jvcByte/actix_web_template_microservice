@@ -60,8 +60,8 @@ impl JwtConfig {
 impl EnvVariables {
     pub fn init() {
         let db_url = env::var("DATABASE_URL").expect(".env: DATABASE_URL must be set");
-        let address = env::var("ADDRESS").expect(".env: ADDRESS must be set");
-        let port = env::var("PORT").expect(".env: PORT must be set");
+        let address = env::var("ADDRESS").unwrap_or_else(|_| "0.0.0.0".to_string());
+        let port = env::var("PORT").unwrap_or_else(|_| "8080".to_string());
 
         ENV_VARIABLES
             .set(EnvVariables {
