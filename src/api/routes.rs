@@ -34,11 +34,11 @@ async fn available_routes() -> impl Responder {
 /// Example usage from `main.rs`:
 ///     .configure(crud_with_sea_orm::api::routes)
 pub fn routes(cfg: &mut web::ServiceConfig) {
+    cfg.service(web::scope("").configure(home_routes));
     cfg.service(
         web::scope("/api")
             .route("", web::get().to(available_routes))
             .route("/", web::get().to(available_routes))
-            .configure(home_routes)
             .configure(user_routes)
             .configure(auth_routes),
     );
