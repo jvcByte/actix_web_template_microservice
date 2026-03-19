@@ -7,7 +7,6 @@
 use actix_web::{Responder, web};
 
 use crate::api::auth::routes::auth_routes;
-use crate::api::home::routes::home_routes;
 use crate::api::users::routes::user_routes;
 
 async fn available_routes() -> impl Responder {
@@ -34,7 +33,6 @@ async fn available_routes() -> impl Responder {
 /// Example usage from `main.rs`:
 ///     .configure(crud_with_sea_orm::api::routes)
 pub fn routes(cfg: &mut web::ServiceConfig) {
-    cfg.service(web::scope("").configure(home_routes));
     cfg.service(
         web::scope("/api")
             .route("", web::get().to(available_routes))

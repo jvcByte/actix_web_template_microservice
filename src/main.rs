@@ -1,10 +1,12 @@
 mod api;
 mod shared;
 
+use crate::api::home::routes::home_routes;
 use crate::api::routes::routes;
 
 use crate::shared::config::load_env_var::{EnvVariables, JwtConfig};
 use crate::shared::config::{app_state::AppState, postgres};
+use actix_web::middleware::NormalizePath;
 use actix_web::{App, HttpServer, middleware::Logger, web};
 use dotenvy::dotenv;
 use env_logger::Env;
@@ -49,7 +51,9 @@ async fn main() -> std::io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .wrap(Logger::default())
+            .wrap(NormalizePath::trim())
             .app_data(state.clone())
+            .configure(home_routes)
             .configure(routes)
     })
     .bind(base_url)?
