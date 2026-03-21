@@ -6,6 +6,8 @@ use crate::api::routes::routes;
 
 use crate::shared::config::load_env_var::{EnvVariables, JwtConfig};
 use crate::shared::config::{app_state::AppState, postgres};
+use actix_cors::Cors;
+use actix_web::http::header;
 use actix_web::middleware::NormalizePath;
 use actix_web::{App, HttpServer, middleware::Logger, web};
 use dotenvy::dotenv;
@@ -49,9 +51,16 @@ async fn main() -> std::io::Result<()> {
     let base_url = format!("{}:{}", address, port);
 
     HttpServer::new(move || {
+        let cors = Cors::default()
+            .allowed_origin("http://localhost:3000")
+            .allowed_methods(vec!["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+            .allowed_headers(vec![header::AUTHORIZATION, header::CONTENT_TYPE])
+            .supports_credentials();
+
         App::new()
             .wrap(Logger::default())
             .wrap(NormalizePath::trim())
+            .wrap(cors)
             .app_data(state.clone())
             .configure(home_routes)
             .configure(routes)
