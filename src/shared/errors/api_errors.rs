@@ -8,7 +8,7 @@ pub enum ApiError {
     Conflict(String),
     NotFound(String),
     InternalError(String),
-    UnprocessableEntity(String),
+    // UnprocessableEntity(String),
 }
 
 impl fmt::Display for ApiError {
@@ -18,7 +18,7 @@ impl fmt::Display for ApiError {
             ApiError::Conflict(msg) => write!(f, "{}", msg),
             ApiError::NotFound(msg) => write!(f, "{}", msg),
             ApiError::InternalError(msg) => write!(f, "{}", msg),
-            ApiError::UnprocessableEntity(msg) => write!(f, "{}", msg),
+            // ApiError::UnprocessableEntity(msg) => write!(f, "{}", msg),
         }
     }
 }
@@ -30,7 +30,7 @@ impl ResponseError for ApiError {
             ApiError::Conflict(_) => StatusCode::CONFLICT,
             ApiError::NotFound(_) => StatusCode::NOT_FOUND,
             ApiError::InternalError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-            ApiError::UnprocessableEntity(_) => StatusCode::UNPROCESSABLE_ENTITY,
+            // ApiError::UnprocessableEntity(_) => StatusCode::UNPROCESSABLE_ENTITY,
         }
     }
 
