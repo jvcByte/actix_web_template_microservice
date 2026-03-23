@@ -55,6 +55,7 @@ async fn main() -> std::io::Result<()> {
             .allowed_origin("http://localhost:1420")
             .allowed_origin("http://localhost:3000")
             .allowed_origin("https://tauri.localhost") // ← add this
+            .allowed_origin("http://tauri.localhost") // ← this is what Android sends
             .allowed_origin("tauri://localhost")
             .allowed_methods(vec!["GET", "POST", "PUT", "DELETE", "OPTIONS"])
             .allowed_headers(vec![header::AUTHORIZATION, header::CONTENT_TYPE])
