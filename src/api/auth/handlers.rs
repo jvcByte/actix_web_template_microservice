@@ -50,7 +50,7 @@ pub async fn register(
     let user_model = UserRepository::find_by_id(&state.db, id)
         .await
         .map_err(|err| ApiError::InternalError(format!("DB Error: {}", err)))?
-        .ok_or_else(|| ApiError::InternalError("Created user not found".into()))?;
+        .ok_or_else(|| ApiError::NotFound("User Not Found".into()))?;
 
     let user = UserResponse {
         id: user_model.id,
@@ -84,7 +84,7 @@ pub async fn login(
     let user_model = UserRepository::find_by_email(&state.db, &req.email)
         .await
         .map_err(|e| ApiError::InternalError(e.to_string()))?
-        .ok_or_else(|| ApiError::UnprocessableEntity("Invalid Email Address".into()))?;
+        .ok_or_else(|| ApiError::NotFound("User Not Found".into()))?;
 
     let user = UserResponse {
         id: user_model.id,
