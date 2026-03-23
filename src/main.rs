@@ -19,7 +19,7 @@ use migration::{Migrator, MigratorTrait};
 async fn main() -> std::io::Result<()> {
     // Load .env (if present) and initialize logging.
     dotenv().ok();
-    let env = Env::default().filter_or("RUST_LOG", "debug");
+    let env = Env::default().filter_or("RUST_LOG", "info");
     env_logger::Builder::from_env(env).init();
 
     // Validate and cache all config from environment at startup.
