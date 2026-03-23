@@ -84,7 +84,7 @@ pub async fn login(
     let user_model = UserRepository::find_by_email(&state.db, &req.email)
         .await
         .map_err(|e| ApiError::InternalError(e.to_string()))?
-        .ok_or_else(|| ApiError::NotFound("Invalid Email Address".into()))?;
+        .ok_or_else(|| ApiError::UnprocessableEntity("Invalid Email Address".into()))?;
 
     let user = UserResponse {
         id: user_model.id,
